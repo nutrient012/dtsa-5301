@@ -1,0 +1,106 @@
+---
+title: "NYPD Shooting Incident"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# Graphic package
+library(ggplot2)
+library(readr)
+library(RColorBrewer)
+library(dplyr)
+library(gridExtra)
+library(corrplot)
+library(caret)
+library(ggmap)
+library(tidyverse)
+library(moderndive)
+library(lubridate)
+library(tibbletime)
+library(stringr)
+library(ggsci)
+```
+
+## Source of data
+
+NYPD Shooting Incident Data (Historic) 
+
+See <https://catalog.data.gov/dataset/nypd-shooting-incident-data-historic>.
+
+```{r}
+url <- "https://data.cityofnewyork.us/api/views/833y-fsy8/rows.csv?accessType=DOWNLOAD"
+shooting_data <- read_csv(url)
+shooting_data
+```
+
+
+
+## Transform Data
+```{r}
+shooting_data <- shooting_data %>%
+  mutate(OCCUR_DATE = mdy(OCCUR_DATE)) %>%
+  mutate(OCCUR_DAY_WDAY = wday(OCCUR_DATE, label = TRUE)) %>%
+  select(-c(INCIDENT_KEY, PRECINCT, JURISDICTION_CODE, X_COORD_CD,Y_COORD_CD,Latitude,Longitude,Lon_Lat)) %>%
+  mutate(OCCUR_YEAR = str_sub(OCCUR_DATE, end = -7))
+shooting_data
+```
+
+
+
+## Shootings: Year-Over-Year Growth
+
+```{r}
+shootings_by_year <- shooting_data %>%
+  count(OCCUR_YEAR)
+shootings_by_year
+```
+
+
+```{r}
+ggplot(data = shootings_by_year, mapping = aes(x = OCCUR_YEAR, y= n)) +
+  geom_bar(stat='identity') + 
+  labs(y = "Cases", x = "Year")
+```
+
+
+
+## Number of Shooting by Boro
+
+```{r}
+shootings_by_boro <- shooting_data %>%
+  count(BORO)
+shootings_by_boro
+```
+
+
+```{r}
+ggplot(data = shootings_by_boro, mapping = aes(x = BORO, y= n)) +
+  geom_bar(stat='identity') + 
+  labs(y = "Cases", x = "Boro")
+```
+
+
+
+## Number of Shooting by Week
+
+```{r}
+shootings_by_week <- shooting_data %>%
+  count(OCCUR_DAY_WDAY)
+shootings_by_week
+```
+
+
+```{r}
+ggplot(data = shootings_by_week, mapping = aes(x = OCCUR_DAY_WDAY, y= n)) +
+  geom_bar(stat='identity') + 
+  labs(y = "Cases", x = "Weekday")
+```
+
+
+
+
+
+
